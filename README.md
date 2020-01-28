@@ -24,6 +24,10 @@ Here I run through some basic manipulations of a mesh.
 
     # Get the halfedge that starts at vertex 25 and ends at vertex 50
     mesh.get_halfedge(25, 50)
+    
+    # Iterate over the vertices of the mesh
+    for i in mesh.vertices:
+        print(i.get_vertex())
 
 Please refer to the documentation for more functionality.
 
