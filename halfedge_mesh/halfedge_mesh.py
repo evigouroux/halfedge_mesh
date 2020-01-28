@@ -1,6 +1,28 @@
 import sys
-import config
+from . import config
 import math
+import functools
+
+# python3 compatibility
+try:
+    xrange
+except NameError:
+    xrange = range
+try:
+    dict.iteritems
+except AttributeError:
+    # Python 3
+    def itervalues(d):
+        return iter(d.values())
+    def iteritems(d):
+        return iter(d.items())
+else:
+    # Python 2
+    def itervalues(d):
+        return d.itervalues()
+    def iteritems(d):
+        return d.iteritems()
+
 
 # TODO: Reorder functions
 
@@ -57,10 +79,10 @@ class HalfedgeMesh:
                 return parser_dispatcher[first_line](file)
 
         except IOError as e:
-            print "I/O error({0}): {1}".format(e.errno, e.strerror)
+            print("I/O error({0}): {1}".format(e.errno, e.strerror))
             return
         except ValueError as e:
-            print "Value error: {0}:".format(e)
+            print("Value error: {0}:".format(e))
             return
 
     def read_off_vertices(self, file_object, number_vertices):
@@ -77,7 +99,7 @@ class HalfedgeMesh:
 
             try:
                 # convert strings to floats
-                line = map(float, line)
+                line = list(map(float, line))
             except ValueError as e:
                 raise ValueError("vertices " + str(e))
 
@@ -121,7 +143,7 @@ class HalfedgeMesh:
             line = file_object.readline().split()
 
             # convert strings to ints
-            line = map(int, line)
+            line = list(map(int, line))
 
             # TODO: make general to support non-triangular meshes
             # Facets vertices are in counter-clockwise order
@@ -132,7 +154,7 @@ class HalfedgeMesh:
             # verts = [1,2,3] then zip(verts, verts[1:]) = [(1,2),(2,3)]
             # note: we skip line[0] because it represents the number of vertices
             # in the facet.
-            all_facet_edges = zip(line[1:], line[2:])
+            all_facet_edges = list(zip(line[1:], line[2:]))
             all_facet_edges.append((line[3], line[1]))
 
             # For every halfedge around the facet
@@ -170,7 +192,7 @@ class HalfedgeMesh:
         facets, halfedges, vertices = [], [], []
 
         # TODO Make ability to discard # lines
-        vertices_faces_edges_counts = map(int, file_object.readline().split())
+        vertices_faces_edges_counts = list(map(int, file_object.readline().split()))
 
         number_vertices = vertices_faces_edges_counts[0]
         vertices = self.read_off_vertices(file_object, number_vertices)
@@ -180,7 +202,7 @@ class HalfedgeMesh:
                                                       number_facets, vertices)
 
         i = 0
-        for key, value in Edges.iteritems():
+        for key, value in iteritems(Edges):
             value.index = i
             halfedges.append(value)
             i += 1
@@ -403,9 +425,9 @@ def allclose(v1, v2):
     v1 = make_iterable(v1)
     v2 = make_iterable(v2)
 
-    elementwise_compare = map(
-        (lambda x, y: abs(x - y) < config.EPSILON), v1, v2)
-    return reduce((lambda x, y: x and y), elementwise_compare)
+    elementwise_compare = list(map(
+        (lambda x, y: abs(x - y) < config.EPSILON), v1, v2))
+    return functools.reduce((lambda x, y: x and y), elementwise_compare)
 
 
 def make_iterable(obj):
@@ -431,8 +453,8 @@ def dot(v1, v2):
 
     Return v1 dot v2
     """
-    elementwise_multiply = map((lambda x, y: x * y), v1, v2)
-    return reduce((lambda x, y: x + y), elementwise_multiply)
+    elementwise_multiply = list(map((lambda x, y: x * y), v1, v2))
+    return functools.reduce((lambda x, y: x + y), elementwise_multiply)
 
 
 def norm(vec):
@@ -440,7 +462,7 @@ def norm(vec):
 
     vec - a 3d vector expressed as a list of 3 floats.
     """
-    return math.sqrt(reduce((lambda x, y: x + y * y), vec, 0.0))
+    return math.sqrt(functools.reduce((lambda x, y: x + y * y), vec, 0.0))
 
 
 def normalize(vec):
@@ -452,7 +474,7 @@ def normalize(vec):
     """
     if norm(vec) < 1e-6:
         return [0 for i in xrange(len(vec))]
-    return map(lambda x: x / norm(vec), vec)
+    return list(map(lambda x: x / norm(vec), vec))
 
 
 def cross_product(v1, v2):
@@ -472,4 +494,4 @@ def create_vector(p1, p2):
 
     Return a list [x,y,z] for the coordinates of vector
     """
-    return map((lambda x,y: x-y), p2, p1)
+    return list(map((lambda x,y: x-y), p2, p1))

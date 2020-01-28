@@ -220,9 +220,9 @@ def test_internal_cross_product():
     assert halfedge_mesh.cross_product(v_i, v_j) == v_k
     assert halfedge_mesh.cross_product(v_j, v_k) == v_i
     assert halfedge_mesh.cross_product(v_k, v_i) == v_j
-    assert halfedge_mesh.cross_product(v_j, v_i) == map(lambda x: -x, v_k)
-    assert halfedge_mesh.cross_product(v_i, v_k) == map(lambda x: -x, v_j)
-    assert halfedge_mesh.cross_product(v_k, v_j) == map(lambda x: -x, v_i)
+    assert halfedge_mesh.cross_product(v_j, v_i) == list(map(lambda x: -x, v_k))
+    assert halfedge_mesh.cross_product(v_i, v_k) == list(map(lambda x: -x, v_j))
+    assert halfedge_mesh.cross_product(v_k, v_j) == list(map(lambda x: -x, v_i))
 
 
 def test_allclose_list_int_float():
