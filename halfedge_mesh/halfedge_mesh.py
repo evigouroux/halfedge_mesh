@@ -196,7 +196,7 @@ class HalfedgeMesh:
 
         number_vertices = vertices_faces_edges_counts[0]
         vertices = self.read_off_vertices(file_object, number_vertices)
-
+ 
         number_facets = vertices_faces_edges_counts[1]
         facets, Edges = self.parse_build_halfedge_off(file_object,
                                                       number_facets, vertices)
@@ -281,6 +281,7 @@ class Vertex:
 
         self.halfedge = halfedge
 
+    
     def __eq__(x, y):
         return x.__key() == y.__key() and type(x) == type(y)
 
@@ -289,6 +290,35 @@ class Vertex:
 
     def __hash__(self):
         return hash(self.__key())
+
+    def get_all_halfedges(self) :
+        current = self.halfedge
+        halfedges = []
+        for i in range(0,4) :
+            halfedges.append(current)
+            current = current.next.opposite
+        return halfedges
+
+
+        return [self.halfedge, self.halfedge.prev, self.halfedge.next]
+
+    def get_all_neighboring_vertices_index(self) :
+        halfedges = self.get_all_halfedges()
+        vertices = []
+
+        for halfedge in halfedges :
+            vertices.append(halfedge.opposite.vertex)
+
+        return vertices
+
+    def get_all_facets(self) :
+        halfedges = self.get_all_halfedges()
+        facets = []
+
+        for halfedge in halfedges :
+            facets.append(halfedge.facet)
+
+        return facets
 
     def get_vertex(self):
         return [self.x, self.y, self.z]
@@ -317,7 +347,20 @@ class Facet:
     def __hash__(self):
         return hash(self.halfedge) ^ hash(self.a) ^ hash(self.b) ^ \
             hash(self.c) ^ hash(self.index) ^ \
-            hash((self.halfedges, self.a, self.b, self.c, self.index))
+            hash((self.halfedge, self.a, self.b, self.c, self.index))
+
+    def get_all_halfedges(self) :
+        return [self.halfedge, self.halfedge.prev, self.halfedge.next]
+
+    def get_all_vertices_index(self) :
+        return [self.a, self.b, self.c]
+
+    def get_all_neighbors(self) :
+        halfedges = self.get_all_halfedges()
+        neighbors = []
+        for halfedge in  halfedges :
+            neighbors.append(halfedge.facet)
+        return neighbors
 
     def get_normal(self):
         """Calculate the normal of facet
