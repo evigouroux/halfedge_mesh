@@ -553,3 +553,46 @@ def create_vector(p1, p2):
     Return a list [x,y,z] for the coordinates of vector
     """
     return list(map((lambda x,y: x-y), p2, p1))
+
+
+def process_geodesic_distance(current,origin,destination,dist,father,visited) :
+    neighbors = current.get_all_halfedges()
+    neighboringVerts = []
+    next = []
+
+    for halfEdge in neighbors :
+        neighboringVerts.append(halfEdge.opposite.vertex)
+
+    for vert in neighboringVerts :
+        if (visited[vert] == False) :
+            father[vert] = current
+            visited[vert] = True
+            dist[vert] = dist[current] + vert.halfedge.get_length()
+            next.append(vert)
+
+    if (len(next) > 0) :
+        for vert in next :
+            process_geodesic_distance(vert,origin,destination,dist,father,visited)
+    else :
+        return 0
+
+
+
+def get_geodesic_distance(vertices, origin, destination) :
+
+    dist = {}
+    father = {}
+    visited = {}
+
+    for vert in vertices :
+        dist[vert] = 999
+        father[vert] = vert
+        visited[vert] = False
+
+    dist[origin] = 0
+    father[origin] = origin
+    visited[origin] = True
+
+    process_geodesic_distance(origin,origin,destination,dist,father,visited)
+
+    print (dist[destination])
