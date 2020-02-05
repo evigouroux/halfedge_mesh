@@ -1,6 +1,7 @@
 import sys
 from . import config
 import math
+from math import sqrt
 import functools
 
 # python3 compatibility
@@ -415,6 +416,20 @@ class Halfedge:
                 hash(self.vertex) ^ hash(self.facet) ^ hash(self.index) ^ \
                 hash((self.opposite, self.next, self.prev, self.vertex,
                     self.facet, self.index))
+
+    def get_length(self) :
+
+        a = self.opposite.vertex
+        b = self.vertex
+
+        x1 = a.x
+        y1 = a.y
+        z1 = a.z
+        x2 = b.x
+        y2 = b.y
+        z2 = b.z
+
+        return ((x2 - x1)**2.0 + (y2 - y1)**2.0 + (z2 - z1)**2.0)**0.5
 
     def get_angle_normal(self):
         """Calculate the angle between the normals that neighbor the edge.

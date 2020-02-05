@@ -21,4 +21,4 @@ mesh.halfedges[10]
 for i in mesh.vertices:
     print(i.get_vertex())
 
-print(mesh.vertices[2].get_all_facets())
+print(mesh.halfedges[4].get_length())
