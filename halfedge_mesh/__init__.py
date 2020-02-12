@@ -9,3 +9,5 @@ from .halfedge_mesh import cross_product
 from .halfedge_mesh import make_iterable
 from .halfedge_mesh import allclose
 from .halfedge_mesh import create_vector
+from .halfedge_mesh import get_geodesic_distance
+from .halfedge_mesh import export_geodesic_distance

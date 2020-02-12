@@ -3,6 +3,7 @@ from . import config
 import math
 from math import sqrt
 import functools
+import copy
 
 # python3 compatibility
 try:
@@ -567,7 +568,8 @@ def process_geodesic_distance(current,origin,destination,dist,father,visited) :
         if (visited[vert] == False) :
             father[vert] = current
             visited[vert] = True
-            dist[vert] = dist[current] + vert.halfedge.get_length()
+            if (dist[vert] > dist[current] + vert.halfedge.get_length()) :
+                dist[vert] = dist[current] + vert.halfedge.get_length()
             next.append(vert)
 
     if (len(next) > 0) :
@@ -576,23 +578,118 @@ def process_geodesic_distance(current,origin,destination,dist,father,visited) :
     else :
         return 0
 
+def maximeGeodesic (self, s) :
 
+        dist = {}
+        father = {}
+        visited = {}
+        vertices = copy.copy(mesh.vertices)
 
-def get_geodesic_distance(vertices, origin, destination) :
+        for vert in vertices :
+            dist[vert] = float('inf')
+            father[vert] = vert
+            visited[vert] = False
+
+        vertices.remove(origin)
+        dist[origin] = 0
+        visited[origin] = True
+
+        process_geodesic_distance(origin,origin,destination,dist,father,visited)
+
+        current = destination
+        path = []
+        while current != origin :
+            path.append(father[current])
+            current = father[current]
+
+        return (path)
+
+        inf = float('inf')
+        vertices = []
+        for v in self.vertices :
+            v.vu = False
+            v.dist = inf
+        sommets = self.vertices[:]
+        sommets.remove(s)
+        s.vu = True
+        s.dist = 0
+
+        while len(sommets) != 0 :
+            voisins = s.adjacent_vertices()
+            for v in voisins :
+                nouvelle_dist = s.dist + s.distance(v)
+
+                if v.vu == False:
+                    vertices.append([v, nouvelle_dist])
+
+                if v.dist > nouvelle_dist :
+                    v.dist = nouvelle_dist
+
+            vertices.sort(key = lambda vertices : vertices[1])
+            s = vertices[0][0]
+            while s.vu == True:
+                del vertices[0]
+                s = vertices[0][0]
+
+            del vertices[0]
+            s.vu = True
+            sommets.remove(s)
+
+        fin = time.time()
+        print(fin-debut)
+
+def get_geodesic_distance(mesh, origin, destination) :
 
     dist = {}
     father = {}
     visited = {}
+    vertices = copy.copy(mesh.vertices)
 
     for vert in vertices :
-        dist[vert] = 999
+        dist[vert] = float('inf')
         father[vert] = vert
         visited[vert] = False
 
+    vertices.remove(origin)
     dist[origin] = 0
-    father[origin] = origin
     visited[origin] = True
 
     process_geodesic_distance(origin,origin,destination,dist,father,visited)
 
-    print (dist[destination])
+    current = destination
+    path = []
+    while current != origin :
+        path.append(father[current])
+        current = father[current]
+
+    return (path)
+
+
+def export_geodesic_distance(mesh, origin, destination) :
+
+    output = open("geodesic.off", "w")
+    print ("Ouverture du fichier",output.name)
+
+    path = get_geodesic_distance(mesh, origin, destination)
+
+    vertices = copy.copy(mesh.vertices)
+    facets = copy.copy(mesh.facets)
+
+    output.writelines("COFF\n")
+    output.writelines("" + str(len(vertices)) + " " + str(len(facets)) + " " + str(len(mesh.halfedges)/2) + "\n")
+
+    for vert in vertices :
+        current = vert.get_vertex()
+        color = " 0 0 0\n"
+        if (vert == origin or vert == destination) :
+            color = " 255 0 0\n"
+        elif (vert in path) :
+            color = " 0 255 0\n"
+
+        output.writelines(str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + color)
+
+    for facet in facets :
+        current = facet.get_all_vertices_index()
+        output.writelines("3 " + str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + " 0 0 0\n")
+
+    output.close()

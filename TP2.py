@@ -1,10 +1,11 @@
 import halfedge_mesh
 from halfedge_mesh import get_geodesic_distance
+from halfedge_mesh import export_geodesic_distance
 
 # TODO : comments, color, faces, line break,
 
 # .off are supported
-mesh = halfedge_mesh.HalfedgeMesh("cube.off")
+mesh = halfedge_mesh.HalfedgeMesh("bitore.off")
 
 # Returns a list of Vertex type (in order of file)--similarly for halfedges,
 # and facets
@@ -20,7 +21,6 @@ mesh.halfedges[10]
 
 
 a = mesh.vertices[1]
-b = mesh.vertices[6]
+b = mesh.vertices[75]
 
-get_geodesic_distance(mesh.vertices,a,b)
-
+export_geodesic_distance(mesh, a , b)
