@@ -358,8 +358,8 @@ class Facet:
     def get_all_neighbors(self) :
         halfedges = self.get_all_halfedges()
         neighbors = []
-        for halfedge in  halfedges :
-            neighbors.append(halfedge.facet)
+        for halfedge in halfedges :
+            neighbors.append(halfedge.opposite.facet)
         return neighbors
 
     def get_perimeter(self) :
@@ -684,12 +684,12 @@ def export_geodesic_distance(mesh, origin, destination) :
 
 def depth_first_search_by_class(toDo, origin, component, classes) :
 
-    neighbors = origin.get_all_neighboring_vertices()
-    component.append(origin)
+    neighbors = origin.get_all_neighbors()
+    component.append(origin.index)
     toDo.remove(origin)
 
     for neighbor in neighbors :
-        if (neighbor in toDo and classes[origin.halfedge.facet.index] == classes[neighbor.halfedge.facet.index]) :
+        if (neighbor in toDo and classes[origin.index] == classes[neighbor.index]) :
             depth_first_search_by_class(toDo, neighbor, component, classes)
 
     return component
@@ -697,15 +697,12 @@ def depth_first_search_by_class(toDo, origin, component, classes) :
 def generateColors (number) :
     colors = []
 
-    R = 0
-    G = 0
-    B = 0
-
     for i in range(0,number) :
+        R = random.randint(0,255)
+        G = random.randint(0,255)
+        B = random.randint(0,255)
         colors.append(" " + str(R) + " " + str(G) + " " + str(B) + "\n")
-        B += G
-        G += R
-        R += 50
+        
 
     return colors
 
@@ -749,9 +746,10 @@ def simpleMeshSegmentationBySize(mesh) :
 def meshSegmentationBySize (mesh) :
 
     facets = mesh.facets
+    vertices = mesh.vertices
     perimeters = {}
     classes = {}
-    toDo = copy.copy(mesh.vertices)
+    toDo = copy.copy(mesh.facets)
     components = []
 
     for facet in facets :
@@ -762,16 +760,7 @@ def meshSegmentationBySize (mesh) :
     for perimeter in perimeters:
         count += 1
         sum += perimeters[perimeter]
-
     mean = sum/count
-
-    output = open("meshSegmentation.off", "w")
-    print ("Ouverture du fichier",output.name)
-    vertices = copy.copy(mesh.vertices)
-    facets = copy.copy(mesh.facets)
-    output.writelines("COFF\n")
-    output.writelines("" + str(len(vertices)) + " " + str(len(facets)) + " " + str(len(mesh.halfedges)/2) + "\n")
-
 
     for facet in facets :
         if (perimeters[facet.index] > mean) :
@@ -779,11 +768,17 @@ def meshSegmentationBySize (mesh) :
         else :
             classes[facet.index] = 1
 
+    output = open("meshSegmentation.off", "w")
+    print ("Ouverture du fichier",output.name)
+    output.writelines("COFF\n")
+    output.writelines("" + str(len(vertices)) + " " + str(len(facets)) + " " + str(len(mesh.halfedges)/2) + "\n")
+
     while toDo :
         component = depth_first_search_by_class(toDo, toDo[0], [], classes)
-        components.append(component)    
+        components.append(component)  
 
     colors = generateColors(len(components))
+
 
     for vert in mesh.vertices :
             current = vert.get_vertex()
@@ -792,7 +787,7 @@ def meshSegmentationBySize (mesh) :
     for facet in facets :
         current = facet.get_all_vertices_index()
         for i in range(0,len(components)) :
-            if facet.halfedge.vertex in components[i] :
+            if facet.index in components[i] :
                 color = colors[i]
         output.writelines("3 " + str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + color)
 

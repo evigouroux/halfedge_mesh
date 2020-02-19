@@ -31,4 +31,4 @@ b = mesh.vertices[75]
 
 #color_connected_components(mesh)
 #export_geodesic_distance(mesh, a, b)
-simpleMeshSegmentationBySize(mesh)
+meshSegmentationBySize(mesh)
