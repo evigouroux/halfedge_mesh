@@ -304,7 +304,7 @@ class Vertex:
 
         return [self.halfedge, self.halfedge.prev, self.halfedge.next]
 
-    def get_all_neighboring_vertices_index(self) :
+    def get_all_neighboring_vertices(self) :
         halfedges = self.get_all_halfedges()
         vertices = []
 
@@ -555,122 +555,102 @@ def create_vector(p1, p2):
     """
     return list(map((lambda x,y: x-y), p2, p1))
 
-
-def process_geodesic_distance(current,origin,destination,dist,father,visited) :
-    neighbors = current.get_all_halfedges()
-    neighboringVerts = []
-    next = []
-
-    for halfEdge in neighbors :
-        neighboringVerts.append(halfEdge.opposite.vertex)
-
-    for vert in neighboringVerts :
-        if (visited[vert] == False) :
-            father[vert] = current
-            visited[vert] = True
-            if (dist[vert] > dist[current] + vert.halfedge.get_length()) :
-                dist[vert] = dist[current] + vert.halfedge.get_length()
-            next.append(vert)
-
-    if (len(next) > 0) :
-        for vert in next :
-            process_geodesic_distance(vert,origin,destination,dist,father,visited)
-    else :
-        return 0
-
-def maximeGeodesic (self, s) :
-
-        dist = {}
-        father = {}
-        visited = {}
-        vertices = copy.copy(mesh.vertices)
-
-        for vert in vertices :
-            dist[vert] = float('inf')
-            father[vert] = vert
-            visited[vert] = False
-
-        vertices.remove(origin)
-        dist[origin] = 0
-        visited[origin] = True
-
-        process_geodesic_distance(origin,origin,destination,dist,father,visited)
-
-        current = destination
-        path = []
-        while current != origin :
-            path.append(father[current])
-            current = father[current]
-
-        return (path)
-
-        inf = float('inf')
-        vertices = []
-        for v in self.vertices :
-            v.vu = False
-            v.dist = inf
-        sommets = self.vertices[:]
-        sommets.remove(s)
-        s.vu = True
-        s.dist = 0
-
-        while len(sommets) != 0 :
-            voisins = s.adjacent_vertices()
-            for v in voisins :
-                nouvelle_dist = s.dist + s.distance(v)
-
-                if v.vu == False:
-                    vertices.append([v, nouvelle_dist])
-
-                if v.dist > nouvelle_dist :
-                    v.dist = nouvelle_dist
-
-            vertices.sort(key = lambda vertices : vertices[1])
-            s = vertices[0][0]
-            while s.vu == True:
-                del vertices[0]
-                s = vertices[0][0]
-
-            del vertices[0]
-            s.vu = True
-            sommets.remove(s)
-
-        fin = time.time()
-        print(fin-debut)
+# Renvoie un tuple contenant la distance géodésique entre les points "origin" et "destination" ainsi que la liste des sommets la composant
 
 def get_geodesic_distance(mesh, origin, destination) :
-
+    visited = {}
     dist = {}
     father = {}
-    visited = {}
-    vertices = copy.copy(mesh.vertices)
+    toDo = copy.copy(mesh.vertices)
 
-    for vert in vertices :
-        dist[vert] = float('inf')
-        father[vert] = vert
-        visited[vert] = False
-
-    vertices.remove(origin)
+    # Initialisation Dijkstra
+    for vertex in mesh.vertices :
+        visited[vertex] = False
+        dist[vertex] = float("inf")
+        father[vertex] = vertex
     dist[origin] = 0
-    visited[origin] = True
 
-    process_geodesic_distance(origin,origin,destination,dist,father,visited)
+    current = origin
 
-    current = destination
+    # Dijkstra
+    while not visited[destination] and toDo :
+        neighbors = current.get_all_neighboring_vertices()
+        for neighbor in neighbors :
+            if (not visited[neighbor]) :
+                newDist = dist[current] + neighbor.halfedge.get_length()
+                father[neighbor] = current
+                if (newDist < dist[neighbor]) :
+                    dist[neighbor] = newDist
+        
+        visited[current] = True
+        toDo.remove(current)
+        current = min(toDo, key = dist.get)
+
+    # On récupère tous les ancêtre de notre "destination" dans le parcours qu'on viens de faire afin d'obtenir le trajet le plus court
+    currentFather = destination
     path = []
-    while current != origin :
-        path.append(father[current])
-        current = father[current]
+    while currentFather != origin :
+        path.append(currentFather)
+        currentFather = father[currentFather]
 
-    return (path)
+    return dist[destination],path
 
+# Parcours en profondeur à partie de "origin", renvoie la liste des sommets contenu dans la même composante connexe que celui ci
+def depth_first_search(toDo, origin, component) :
 
+    neighbors = origin.get_all_neighboring_vertices()
+    component.append(origin)
+    toDo.remove(origin)
+
+    for neighbor in neighbors :
+        if (neighbor in toDo) :
+            depth_first_search(toDo, neighbor, component)
+
+    return component
+
+# Génère un "connected_component.off" contenant le mesh où les composantes connexes ont été coloré
+def color_connected_components(mesh) :
+    
+    toDo = copy.copy(mesh.vertices)
+    components = []
+    # Liste de couleur à disposition, on aurant pus programmer une fonction qui les génère en fonction du nombre de composantes connexes
+    # mais on a estimé que ce n'était pas capital
+    colors = [" 255 0 0\n"," 0 255 0\n"," 0 0 255\n"," 255 255 0\n"," 0 255 255\n"," 255 0 255\n"," 127 0 0\n"," 0 127 0\n"," 0 0 127\n"]
+
+    output = open("connected_component.off", "w")
+    print ("Ouverture du fichier",output.name)
+    vertices = copy.copy(mesh.vertices)
+    facets = copy.copy(mesh.facets)
+    output.writelines("COFF\n")
+    output.writelines("" + str(len(vertices)) + " " + str(len(facets)) + " " + str(len(mesh.halfedges)/2) + "\n")
+
+    # On effectue des parcours en profondeur jusqu'a ce qu'il ne reste plus aucun sommet non visité
+    while toDo :
+        component = depth_first_search(toDo, toDo[0], [])
+        components.append(component)    
+    
+    # On colorie tous les sommets en fonction de leurs composantes connexes...
+    for vert in mesh.vertices :
+            current = vert.get_vertex()
+            for i in range(0,len(components)) :
+                if vert in components[i] :
+                    color = colors[i]
+            output.writelines(str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + color)
+
+    # ...et les faces en blanc
+    for facet in facets :
+        current = facet.get_all_vertices_index()
+        output.writelines("3 " + str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + " 255 255 255\n")
+
+    output.close()
+
+# Utilise la fonction geodesic_distance définie plus haut pour exporter un "geodesic.off" où le trajet le plus court est coloré
 def export_geodesic_distance(mesh, origin, destination) :
 
     output = open("geodesic.off", "w")
     print ("Ouverture du fichier",output.name)
 
-    path = get_geodesic_distance(mesh, origin, destination)
+    path = get_geodesic_distance(mesh, origin, destination)[1]
 
     vertices = copy.copy(mesh.vertices)
     facets = copy.copy(mesh.facets)
@@ -678,9 +658,10 @@ def export_geodesic_distance(mesh, origin, destination) :
     output.writelines("COFF\n")
     output.writelines("" + str(len(vertices)) + " " + str(len(facets)) + " " + str(len(mesh.halfedges)/2) + "\n")
 
+    # On colore les sommets, rouge pour l'origine et la destination, vert pour le trajet, blanc pour les autres
     for vert in vertices :
         current = vert.get_vertex()
-        color = " 0 0 0\n"
+        color = " 255 255 255\n"
         if (vert == origin or vert == destination) :
             color = " 255 0 0\n"
         elif (vert in path) :
@@ -690,6 +671,6 @@ def export_geodesic_distance(mesh, origin, destination) :
 
     for facet in facets :
         current = facet.get_all_vertices_index()
-        output.writelines("3 " + str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + " 0 0 0\n")
+        output.writelines("3 " + str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + " 255 255 255\n")
 
     output.close()
