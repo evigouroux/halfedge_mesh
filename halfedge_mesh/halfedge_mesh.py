@@ -301,9 +301,6 @@ class Vertex:
             current = current.next.opposite
         return halfedges
 
-
-        return [self.halfedge, self.halfedge.prev, self.halfedge.next]
-
     def get_all_neighboring_vertices(self) :
         halfedges = self.get_all_halfedges()
         vertices = []
@@ -363,6 +360,15 @@ class Facet:
         for halfedge in  halfedges :
             neighbors.append(halfedge.facet)
         return neighbors
+
+    def get_perimeter(self) :
+        halfedges = self.get_all_halfedges()
+        perimeter = 0
+
+        for halfedge in halfedges :
+            perimeter += halfedge.get_length()
+
+        return perimeter
 
     def get_normal(self):
         """Calculate the normal of facet
@@ -674,3 +680,73 @@ def export_geodesic_distance(mesh, origin, destination) :
         output.writelines("3 " + str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + " 255 255 255\n")
 
     output.close()
+
+def depth_first_search_by_class(toDo, origin, component, classes) :
+
+    neighbors = origin.get_all_neighbors()
+    component.append(origin)
+    toDo.remove(origin)
+
+  
+
+    for neighbor in neighbors :
+        print (classes[neighbor.index], classes[origin.index])
+        if (neighbor in toDo and classes[neighbor.index] == classes[origin.index]) :
+            depth_first_search_by_class(toDo, neighbor, component, classes)
+
+    return component
+
+def meshSegmentationBySize (mesh) :
+
+    facets = mesh.facets
+    perimeters = {}
+    classes = {}
+    toDo = copy.copy(mesh.facets)
+    components = []
+    colors = [" 255 0 0\n"," 0 255 0\n"," 0 0 255\n"," 255 255 0\n"," 0 255 255\n"," 255 0 255\n"," 127 0 0\n"," 0 127 0\n"," 0 0 127\n", " 127 127 0\n", " 0 127 127\n", " 127 0 127\n", " 34 34 34\n", " 78 186 96\n", " 46 255 128\n"]
+
+
+    for facet in facets :
+        perimeters[facet.index] = facet.get_perimeter()
+
+    count = 0
+    sum = 0
+    for perimeter in perimeters:
+        count += 1
+        sum += perimeters[perimeter]
+
+    mean = sum/count
+
+    for facet in facets :
+        if (perimeters[facet.index] > mean) :
+            classes[facet.index] = 0
+        else :
+            classes[facet.index] = 1
+
+    while toDo :
+        component = depth_first_search_by_class(toDo, toDo[0], [], classes)
+        components.append(component) 
+
+    output = open("meshSegmentation.off", "w")
+    print ("Ouverture du fichier",output.name)
+    vertices = copy.copy(mesh.vertices)
+    facets = copy.copy(mesh.facets)
+    output.writelines("COFF\n")
+    output.writelines("" + str(len(vertices)) + " " + str(len(facets)) + " " + str(len(mesh.halfedges)/2) + "\n")
+    
+    for vert in mesh.vertices :
+        current = vert.get_vertex()
+        output.writelines(str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + " 0 0 0\n")
+
+    for facet in facets :
+
+        current = facet.get_all_vertices_index()
+
+        for i in range(0,len(components)) :
+            if facet in components[i] :
+                color = ( " 255 255 255\n")
+        output.writelines("3 " + str(current[0]) + " " + str(current[1]) + " " + str(current[2]) + color)
+
+    output.close()
+
+    return mean

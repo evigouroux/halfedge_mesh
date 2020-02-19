@@ -12,3 +12,4 @@ from .halfedge_mesh import create_vector
 from .halfedge_mesh import get_geodesic_distance
 from .halfedge_mesh import export_geodesic_distance
 from .halfedge_mesh import color_connected_components
+from .halfedge_mesh import meshSegmentationBySize

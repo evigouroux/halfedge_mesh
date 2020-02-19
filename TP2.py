@@ -2,6 +2,7 @@ import halfedge_mesh
 from halfedge_mesh import get_geodesic_distance
 from halfedge_mesh import export_geodesic_distance
 from halfedge_mesh import color_connected_components
+from halfedge_mesh import meshSegmentationBySize
 
 # TODO : comments, color, faces, line break,
 
@@ -10,6 +11,7 @@ mesh = halfedge_mesh.HalfedgeMesh("bonhomme.off")
 
 # Returns a list of Vertex type (in order of file)--similarly for halfedges,
 # and facets
+
 mesh.vertices
 
 # The number of facets in the mesh
@@ -25,5 +27,7 @@ mesh.halfedges[10]
 a = mesh.vertices[1]
 b = mesh.vertices[75]
 
-color_connected_components(mesh)
-export_geodesic_distance(mesh, a, b)
+#color_connected_components(mesh)
+#export_geodesic_distance(mesh, a, b)
+
+meshSegmentationBySize(mesh)
